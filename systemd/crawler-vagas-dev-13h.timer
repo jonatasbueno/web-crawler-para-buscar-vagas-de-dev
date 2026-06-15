@@ -1,0 +1,10 @@
+[Unit]
+Description=Executa crawler de vagas dev às 13:00
+
+[Timer]
+OnCalendar=*-*-* 13:00:00
+Persistent=true
+Unit=crawler-vagas-dev-13h.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,9 @@
+# Exemplo de crontab (BRT) — ajuste PROJECT_DIR e instale com: crontab -e
+# Migrações e pipeline rodam via npm; logs em data/cron.log
+#
+# PROJECT_DIR=/home/user/crawler-vagas-dev
+#
+# 0 8  * * * cd PROJECT_DIR && /usr/bin/npm run run:cron:8  >> data/cron.log 2>&1
+# 0 13 * * * cd PROJECT_DIR && /usr/bin/npm run run:cron:13 >> data/cron.log 2>&1
+# 0 20 * * * cd PROJECT_DIR && /usr/bin/npm run run:cron:20 >> data/cron.log 2>&1
+# @reboot     cd PROJECT_DIR && /usr/bin/npm run run:cron:catch-up >> data/cron.log 2>&1
