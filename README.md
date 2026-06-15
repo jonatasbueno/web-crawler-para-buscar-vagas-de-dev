@@ -94,7 +94,7 @@ flowchart TD
     R --> S{Há vagas novas?}
     S -->|Sim| T[Enviar notificação Slack]
     S -->|Não| U{notifyWhenEmpty?}
-    U -->|Sim| V[Enviar "Nenhuma vaga nova"]
+    U -->|Sim| V[Enviar aviso de lista vazia]
     U -->|Não| W[Pular notificação]
 
     T --> X[Salvar vagas em jobs_sent]
