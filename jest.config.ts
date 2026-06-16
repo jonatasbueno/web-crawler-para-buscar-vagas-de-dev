@@ -18,7 +18,8 @@ export default {
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/index.ts',
-    '!src/db/migrations/**/*.ts'
+    '!src/db/migrations/**/*.ts',
+    '!src/db/migrate.ts'
   ],
   coverageThreshold: {
     global: {

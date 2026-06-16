@@ -1,15 +1,18 @@
-import { Knex } from 'knex';
+import { Kysely, sql } from 'kysely';
 
-export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable('jobs_sent', (table) => {
-    table.increments('id').primary();
-    table.string('link').notNullable().unique();
-    table.string('title').notNullable();
-    table.string('company');
-    table.timestamp('sent_at').defaultTo(knex.fn.now());
-  });
+export async function up(db: Kysely<unknown>): Promise<void> {
+  await db.schema
+    .createTable('jobs_sent')
+    .addColumn('id', 'integer', (col) => col.primaryKey().autoIncrement())
+    .addColumn('link', 'text', (col) => col.notNull().unique())
+    .addColumn('title', 'text', (col) => col.notNull())
+    .addColumn('company', 'text')
+    .addColumn('sent_at', 'text', (col) =>
+      col.defaultTo(sql`(datetime('now'))`).notNull()
+    )
+    .execute();
 }
 
-export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTable('jobs_sent');
+export async function down(db: Kysely<unknown>): Promise<void> {
+  await db.schema.dropTable('jobs_sent').execute();
 }

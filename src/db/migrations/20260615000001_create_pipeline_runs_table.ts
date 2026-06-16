@@ -1,19 +1,25 @@
-import { Knex } from 'knex';
+import { Kysely, sql } from 'kysely';
 
-/**
- * Registra cada execução agendada do pipeline no dia.
- * Usado pelo --catch-up para saber quais slots (08h, 13h, 20h) ainda não rodaram.
- */
-export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable('pipeline_runs', (table) => {
-    table.increments('id').primary();
-    table.string('run_date').notNullable();   // YYYY-MM-DD
-    table.integer('scheduled_hour').notNullable(); // 8 | 13 | 20
-    table.string('status').notNullable().defaultTo('success'); // 'success' | 'error'
-    table.timestamp('ran_at').defaultTo(knex.fn.now());
-  });
+export async function up(db: Kysely<unknown>): Promise<void> {
+  await db.schema
+    .createTable('pipeline_runs')
+    .addColumn('id', 'integer', (col) => col.primaryKey().autoIncrement())
+    .addColumn('run_date', 'text', (col) => col.notNull())
+    .addColumn('scheduled_hour', 'integer', (col) => col.notNull())
+    .addColumn('status', 'text', (col) => col.notNull().defaultTo('success'))
+    .addColumn('ran_at', 'text', (col) =>
+      col.defaultTo(sql`(datetime('now'))`).notNull()
+    )
+    .execute();
+
+  await db.schema
+    .createIndex('pipeline_runs_run_date_scheduled_hour_unique')
+    .on('pipeline_runs')
+    .columns(['run_date', 'scheduled_hour'])
+    .unique()
+    .execute();
 }
 
-export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTable('pipeline_runs');
+export async function down(db: Kysely<unknown>): Promise<void> {
+  await db.schema.dropTable('pipeline_runs').execute();
 }

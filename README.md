@@ -20,7 +20,7 @@ O pipeline roda de forma agendada (3 vezes ao dia) ou sob demanda, com persistê
 - **Agendamento automático** — Execuções às **08h, 13h e 20h** (horário de Brasília).
 - **Catch-up no boot** — Ao reiniciar a máquina, executa slots pendentes do dia que ainda não rodaram.
 - **Execução avulsa** — Modo `--once-loose` para rodar o pipeline manualmente sem aviso de lista vazia.
-- **Migrações de banco** — Schema versionado com Knex para tabelas de vagas enviadas e histórico de execuções.
+- **Migrações de banco** — Schema versionado com Kysely para tabelas de vagas enviadas e histórico de execuções.
 - **Testes automatizados** — Cobertura de filtros, parsers, repositório, scrapers e notificador.
 
 ---
@@ -36,7 +36,12 @@ src/
 ├── filters/          # Regras de negócio para elegibilidade de vagas
 ├── sorters/          # Ordenação das vagas antes do envio
 ├── notifier/         # Integração com Slack
-├── db/               # Persistência (Repository + migrations)
+├── db/
+│   ├── schema.ts     # Tipos do banco (Database, Insertable, Selectable)
+│   ├── connection.ts # Instância Kysely + factory createDb()
+│   ├── migrate.ts    # Runner de migrations (npm run db:migrate)
+│   ├── JobsRepository.ts
+│   └── migrations/   # Migrations versionadas do Kysely
 ├── utils/            # Parsers compartilhados (senioridade, modelo)
 └── types/            # Contratos TypeScript (Job, Seniority, WorkModel)
 ```
@@ -121,7 +126,7 @@ sequenceDiagram
     participant DB as SQLite
 
     Scheduler->>CLI: npm run run:cron:8
-    CLI->>DB: db:migrate (Knex)
+    CLI->>DB: db:migrate (Kysely)
     CLI->>Repo: new JobsRepository()
 
     loop Para cada scraper
@@ -169,8 +174,8 @@ sequenceDiagram
 | **Node.js (ES Modules)** | Ecossistema maduro para HTTP, parsing HTML e automação; módulos ESM alinham com padrões modernos do runtime. |
 | **Axios** | Cliente HTTP confiável com suporte a headers customizados (User-Agent), necessário para scraping de páginas que bloqueiam bots. |
 | **Cheerio** | Parser HTML server-side leve e rápido — ideal para extrair dados de páginas estáticas sem overhead de um browser headless. |
-| **Knex.js** | Query builder com migrations versionadas; abstrai SQL mantendo controle sobre schema e evolução do banco. |
-| **SQLite3** | Banco embarcado, zero configuração, arquivo único (`db.sqlite`) — adequado para volume baixo e deploy simples em máquina local ou VPS. |
+| **Kysely** | Query builder type-safe em TypeScript; o schema (`Database`) garante autocompletar e erros em tempo de compilação nas queries. |
+| **better-sqlite3** | Driver SQLite síncrono e performático, integração nativa com o dialect do Kysely. |
 | **dotenv** | Separa credenciais (Slack webhook, LinkedIn) do código-fonte, seguindo boas práticas de configuração por ambiente. |
 | **Slack (Incoming Webhook)** | Canal de entrega imediato e familiar para o time; mensagens ricas com Block Kit melhoram a leitura das vagas. |
 | **Jest + ts-jest** | Framework de testes consolidado no ecossistema Node/TS; cobertura integrada valida filtros, parsers e lógica de persistência. |
@@ -226,6 +231,8 @@ npm run db:migrate
 | `npm run run:cron:20` | Pipeline do slot das 20h |
 | `npm run run:cron:catch-up` | Executa slots pendentes do dia |
 | `npm run cron:install` | Instala timers systemd (user) |
+| `npm run db:migrate` | Aplica migrations do Kysely |
+| `npm run db:rollback` | Reverte a última migration |
 | `npm test` | Roda testes com cobertura |
 
 ### Agendamento
@@ -263,7 +270,7 @@ Registra execuções agendadas por dia e slot horário (usado pelo catch-up).
 |--------|------|-----------|
 | `id` | integer | PK |
 | `run_date` | string | Data (YYYY-MM-DD, BRT) |
-| `scheduled_hour` | integer | 8, 13 ou 20 |
+| `scheduled_hour` | integer | 8, 13 ou 20 (único por `run_date`) |
 | `status` | string | `success` ou `error` |
 | `ran_at` | timestamp | Momento da execução |
 

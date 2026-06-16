@@ -36,15 +36,25 @@ Use estas seções dentro de cada versão (omitindo as vazias):
 
 ### Added
 
+- Schema tipado do banco em `src/db/schema.ts` (`Database`, `NewJobsSent`, `NewPipelineRun`, etc.).
+- Runner de migrations nativo do Kysely (`src/db/migrate.ts`).
+- Factory `createDb()` para instâncias SQLite em memória nos testes.
+- Índice único em `pipeline_runs (run_date, scheduled_hour)` para deduplicação de execuções.
+
 ### Changed
 
-### Deprecated
+- Substituição de Knex.js + sqlite3 por **Kysely** + **better-sqlite3** com queries type-safe.
+- `JobsRepository` reescrito com API do Kysely (`selectFrom`, `insertInto`, `onConflict`).
+- Scripts `db:migrate` e `db:rollback` passam a usar `tsx src/db/migrate.ts`.
 
 ### Removed
 
+- Dependências `knex` e `sqlite3`.
+- Arquivo `knexfile.ts`.
+
 ### Fixed
 
-### Security
+- `onConflict` em `recordRun` agora funciona corretamente com constraint única no banco.
 
 ---
 
