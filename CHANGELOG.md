@@ -36,6 +36,13 @@ Use estas seções dentro de cada versão (omitindo as vazias):
 
 ### Added
 
+- **Scraper Indeed** (`br.indeed.com`) — busca de "desenvolvedor" (últimos 14 dias, remoto) via
+  navegador headless (Playwright) com User-Agent real para contornar o Cloudflare; paginação
+  por `&start=N`. Inclui **fallback para fechar o popup** de confirmação de e-mail (Esc + botões
+  de fechar) e um **filtro que descarta vagas de torno CNC / programador da área de mecânica**
+  (`isMechanicalRole`). Opções de `BrowserClient`: `userAgent`, `locale`, `waitUntil` e
+  `dismissSelectors`.
+
 - **Arquitetura Clean** em camadas: `domain` (entidades, serviços e ports), `application`
   (casos de uso), `infrastructure` (scrapers, persistência, notifier, HTTP) e `interface` (CLI).
 - Suporte ao Playwright instalado: os scrapers SPA (Sólides, Workana, Coodesh, Trampos)

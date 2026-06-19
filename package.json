@@ -14,7 +14,8 @@
     "run:cron:20": "npm run db:migrate && tsx src/interface/cli/index.ts --scheduled-hour 20",
     "run:cron:catch-up": "npm run db:migrate && tsx src/interface/cli/index.ts --catch-up",
     "run:once:loose": "npm run db:migrate && tsx src/interface/cli/index.ts --once-loose",
-    "cron:install": "bash scripts/install-cron.sh"
+    "cron:install": "bash scripts/install-cron.sh",
+    "lint": "npx eslint . --fix"
   },
   "keywords": [
     "scraper",
@@ -36,11 +37,18 @@
     "playwright": "^1.44.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@jest/globals": "^29.7.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.12.0",
+    "@typescript-eslint/eslint-plugin": "^8.61.1",
+    "@typescript-eslint/parser": "^8.61.1",
+    "eslint": "^10.5.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.6.0",
     "jest": "^29.7.0",
+    "prettier": "^3.8.4",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
     "tsx": "^4.7.1",

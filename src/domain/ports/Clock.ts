@@ -3,9 +3,9 @@
  * determinísticos nos testes.
  */
 export interface Clock {
-  now(): Date;
+  now: () => Date
   /** Hora atual (0–23) no fuso de Brasília. */
-  currentHourBRT(): number;
+  currentHourBRT: () => number
 }
 
 export const systemClock: Clock = {
@@ -14,9 +14,10 @@ export const systemClock: Clock = {
     const hour = new Date().toLocaleString('en-US', {
       timeZone: 'America/Sao_Paulo',
       hour: '2-digit',
-      hour12: false,
-    });
+      hour12: false
+    })
+
     // "24" pode aparecer à meia-noite em alguns runtimes; normaliza para 0.
-    return parseInt(hour, 10) % 24;
-  },
-};
+    return parseInt(hour, 10) % 24
+  }
+}

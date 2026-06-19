@@ -1,39 +1,39 @@
-import vm from 'node:vm';
-import { SourceScraper } from '../../domain/ports/SourceScraper.js';
-import { Job } from '../../domain/entities/Job.js';
-import { parseSeniority, parseWorkModel, stripHtml } from './support/parsing.js';
-import { HttpClient } from '../http/HttpClient.js';
+import vm from 'node:vm'
+import { SourceScraper } from '../../domain/ports/SourceScraper.js'
+import { Job } from '../../domain/entities/Job.js'
+import { parseSeniority, parseWorkModel, stripHtml } from './support/parsing.js'
+import { HttpClient } from '../http/HttpClient.js'
 
-const PAGE_CAP = 10; // trava de segurança por empresa
+const PAGE_CAP = 10 // trava de segurança por empresa
 
 /** Empresas (slugs) com board hospedado no Quickin. Override via QUICKIN_COMPANIES. */
 export const DEFAULT_QUICKIN_COMPANIES: readonly string[] = [
   'avanttibr', 'quickin', 'greentalents', 'pessoalizerh', 'gruponunchi', 'macfor',
   'nposistemas', 'inspin', 'cadmus', 'indt', 'fitoag', 'koin', 'opencircle', 'inoveben',
   'buddhaspa', 'recrutify', 'infovagas', 'triade', 'reply', 'globalti', 'registradores',
-  'tagna', 'recrutiva', 'nexer', 'avvale', 'sek',
-];
+  'tagna', 'recrutiva', 'nexer', 'avvale', 'sek'
+]
 
 /** Documento de vaga conforme o estado `__NUXT__` do board Quickin. */
 export interface QuickinDoc {
-  _id: string;
-  title: string;
-  description?: string;
-  requirements?: string;
-  city?: string;
-  region?: string;
-  country?: string;
-  workplace_type?: string;
-  career_url?: string;
-  created_at?: string;
-  publicate?: string;
+  _id: string
+  title: string
+  description?: string
+  requirements?: string
+  city?: string
+  region?: string
+  country?: string
+  workplace_type?: string
+  career_url?: string
+  created_at?: string
+  publicate?: string
 }
 
 export interface QuickinJobsNode {
-  docs: QuickinDoc[];
-  total: number;
-  page: number;
-  pages: number;
+  docs: QuickinDoc[]
+  total: number
+  page: number
+  pages: number
 }
 
 /**
@@ -41,25 +41,27 @@ export interface QuickinJobsNode {
  * O valor é uma IIFE de serialização do Nuxt; é avaliado num contexto `vm`
  * isolado (sem acesso a globais) apenas para reconstruir o objeto de dados.
  */
-export function extractQuickinJobsNode(html: string): QuickinJobsNode | null {
-  const match = html.match(/window\.__NUXT__=(.*?)<\/script>/s);
-  if (!match) return null;
-  const expression = match[1].replace(/;\s*$/, '');
+export function extractQuickinJobsNode (html: string): QuickinJobsNode | null {
+  const match = html.match(/window\.__NUXT__=(.*?)<\/script>/s)
+
+  if (match == null) return null
+  const expression = match[1].replace(/;\s*$/, '')
   try {
     const state = vm.runInNewContext(expression, Object.create(null), { timeout: 1000 }) as {
-      data?: { jobs?: QuickinJobsNode }[];
-    };
-    return state?.data?.[0]?.jobs ?? null;
+      data?: Array<{ jobs?: QuickinJobsNode }>
+    }
+
+    return state?.data?.[0]?.jobs ?? null
   } catch {
-    return null;
+    return null
   }
 }
 
 /** Converte um documento do Quickin em uma vaga normalizada (função pura). */
-export function parseQuickinDoc(doc: QuickinDoc, company: string): Job {
-  const location = [doc.city, doc.region].filter(Boolean).join(' - ');
-  const model = parseWorkModel(`${doc.workplace_type ?? ''} ${location}`);
-  const description = stripHtml(`${doc.description ?? ''} ${doc.requirements ?? ''}`).slice(0, 2000);
+export function parseQuickinDoc (doc: QuickinDoc, company: string): Job {
+  const location = [doc.city, doc.region].filter(Boolean).join(' - ')
+  const model = parseWorkModel(`${doc.workplace_type ?? ''} ${location}`)
+  const description = stripHtml(`${doc.description ?? ''} ${doc.requirements ?? ''}`).slice(0, 2000)
 
   return {
     title: doc.title,
@@ -69,8 +71,8 @@ export function parseQuickinDoc(doc: QuickinDoc, company: string): Job {
     seniority: parseSeniority(`${doc.title} ${description}`),
     publishedAt: doc.created_at ? new Date(doc.created_at) : undefined,
     description,
-    source: `Quickin:${company}`,
-  };
+    source: `Quickin:${company}`
+  }
 }
 
 /**
@@ -79,39 +81,41 @@ export function parseQuickinDoc(doc: QuickinDoc, company: string): Job {
  * paginação por `?page=N` (campo `pages` informa o total).
  */
 export class QuickinScraper implements SourceScraper {
-  readonly name: string;
+  readonly name: string
 
-  constructor(
+  constructor (
     private readonly company: string,
     private readonly http: HttpClient = new HttpClient()
   ) {
-    this.name = `Quickin:${company}`;
+    this.name = `Quickin:${company}`
   }
 
-  async scrape(): Promise<Job[]> {
-    const jobs: Job[] = [];
+  async scrape (): Promise<Job[]> {
+    const jobs: Job[] = []
     try {
-      let pages = 1;
+      let pages = 1
       for (let page = 1; page <= Math.min(pages, PAGE_CAP); page++) {
         const html = await this.http.getText(
           `https://jobs.quickin.io/${this.company}/jobs?page=${page}`
-        );
-        const node = extractQuickinJobsNode(html);
-        if (!node) break;
-        pages = node.pages ?? 1;
+        )
+        const node = extractQuickinJobsNode(html)
 
-        const docs = node.docs ?? [];
+        if (node == null) break
+        pages = node.pages ?? 1
+
+        const docs = node.docs ?? []
         for (const doc of docs) {
-          if (doc.publicate && doc.publicate !== 'published') continue;
-          jobs.push(parseQuickinDoc(doc, this.company));
+          if (doc.publicate && doc.publicate !== 'published') continue
+          jobs.push(parseQuickinDoc(doc, this.company))
         }
-        if (docs.length === 0) break;
+        if (docs.length === 0) break
       }
     } catch (error) {
-      const reason = error instanceof Error ? error.message : String(error);
-      console.log(`[${this.name}] coleta indisponível (best-effort): ${reason}`);
+      const reason = error instanceof Error ? error.message : String(error)
+      console.log(`[${this.name}] coleta indisponível (best-effort): ${reason}`)
     }
-    return jobs;
+
+    return jobs
   }
 }
 
@@ -119,10 +123,11 @@ export class QuickinScraper implements SourceScraper {
  * Cria um scraper por empresa configurada. Os slugs vêm de `QUICKIN_COMPANIES`
  * (separados por vírgula); na ausência, usa a lista padrão.
  */
-export function createQuickinScrapers(http: HttpClient = new HttpClient()): QuickinScraper[] {
+export function createQuickinScrapers (http: HttpClient = new HttpClient()): QuickinScraper[] {
   const configured = process.env.QUICKIN_COMPANIES?.split(',')
     .map((s) => s.trim())
-    .filter(Boolean);
-  const slugs = configured && configured.length > 0 ? configured : [...DEFAULT_QUICKIN_COMPANIES];
-  return slugs.map((slug) => new QuickinScraper(slug, http));
+    .filter(Boolean)
+  const slugs = (configured != null) && configured.length > 0 ? configured : [...DEFAULT_QUICKIN_COMPANIES]
+
+  return slugs.map((slug) => new QuickinScraper(slug, http))
 }

@@ -1,4 +1,4 @@
-import { RunPipeline } from './RunPipeline.js';
+import { RunPipeline } from './RunPipeline.js'
 
 /**
  * Execução avulsa (sob demanda). Diferente do comportamento anterior, agora
@@ -6,9 +6,9 @@ import { RunPipeline } from './RunPipeline.js';
  * lista vazia). Não registra slot agendado.
  */
 export class RunOnce {
-  constructor(private readonly pipeline: RunPipeline) {}
+  constructor (private readonly pipeline: RunPipeline) {}
 
-  async execute(): Promise<void> {
-    await this.pipeline.execute('once');
+  async execute (): Promise<void> {
+    await this.pipeline.execute('once')
   }
 }

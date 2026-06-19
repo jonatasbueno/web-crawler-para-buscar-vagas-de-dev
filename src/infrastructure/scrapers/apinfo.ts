@@ -1,10 +1,10 @@
-import * as cheerio from 'cheerio';
-import { SourceScraper } from '../../domain/ports/SourceScraper.js';
-import { Job } from '../../domain/entities/Job.js';
-import { parseSeniority, parseWorkModel } from './support/parsing.js';
-import { HttpClient } from '../http/HttpClient.js';
+import * as cheerio from 'cheerio'
+import { SourceScraper } from '../../domain/ports/SourceScraper.js'
+import { Job } from '../../domain/entities/Job.js'
+import { parseSeniority, parseWorkModel } from './support/parsing.js'
+import { HttpClient } from '../http/HttpClient.js'
 
-const HOME = 'https://www.apinfo.com/';
+const HOME = 'https://www.apinfo.com/'
 
 /**
  * APInfo é um portal de TI legado (ColdFusion), server-rendered e codificado em
@@ -12,25 +12,26 @@ const HOME = 'https://www.apinfo.com/';
  * já se alinha ao filtro de recência.
  */
 export class ApinfoScraper implements SourceScraper {
-  readonly name = 'APInfo';
+  readonly name = 'APInfo'
 
-  constructor(private readonly http: HttpClient = new HttpClient()) {}
+  constructor (private readonly http: HttpClient = new HttpClient()) {}
 
-  async scrape(): Promise<Job[]> {
-    const html = await this.http.getDecodedText(HOME, 'latin1');
-    const $ = cheerio.load(html);
-    const jobs: Job[] = [];
+  async scrape (): Promise<Job[]> {
+    const html = await this.http.getDecodedText(HOME, 'latin1')
+    const $ = cheerio.load(html)
+    const jobs: Job[] = []
 
     $('.bloco-vaga-unica').each((_, el) => {
-      const block = $(el);
-      const anchor = block.find('.nome-vaga a');
-      const title = anchor.text().trim();
-      const link = anchor.attr('href');
-      if (!title || !link) return;
+      const block = $(el)
+      const anchor = block.find('.nome-vaga a')
+      const title = anchor.text().trim()
+      const link = anchor.attr('href')
 
-      const locationText = block.find('.data').text().trim();
-      const company = block.find('.empresa').text().trim();
-      const model = parseWorkModel(locationText);
+      if (!title || !link) return
+
+      const locationText = block.find('.data').text().trim()
+      const company = block.find('.empresa').text().trim()
+      const model = parseWorkModel(locationText)
 
       jobs.push({
         title,
@@ -39,10 +40,10 @@ export class ApinfoScraper implements SourceScraper {
         model,
         city: model === 'Híbrido' ? locationText : undefined,
         seniority: parseSeniority(title),
-        source: this.name,
-      });
-    });
+        source: this.name
+      })
+    })
 
-    return jobs;
+    return jobs
   }
 }

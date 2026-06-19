@@ -14,6 +14,7 @@ O pipeline roda de forma agendada (3 vezes ao dia) ou sob demanda, com persistê
   - **Portais SPA** (via Playwright): Sólides Vagas, Workana, Coodesh, Trampos.co (e best-effort: Hipsters.Jobs, Remotar).
   - **Quickin (ATS)** — boards de vagas de empresas hospedados no Quickin, configuráveis por slug (ex.: `avanttibr`).
   - **LinkedIn** — busca pública de vagas (sem login).
+  - **Indeed** — busca de "desenvolvedor" (últimos 14 dias, remoto) via navegador headless (contorna o Cloudflare); fecha o popup de e-mail por fallback e descarta vagas de torno CNC / mecânica.
   - Stubs preparados (GeekHunter, Revelo).
 - **Paginação** — Cada fonte trata paginação/scroll para coleta completa, parando ao ultrapassar a janela de recência.
 - **Filtragem inteligente** — Mantém vagas de Frontend/Mobile **e** do ecossistema JavaScript ampliado (Node, Node-RED, Electron, Elixir, Backbone, TypeScript e afins).

@@ -1,31 +1,32 @@
-import { SourceScraper } from '../../domain/ports/SourceScraper.js';
-import { Job } from '../../domain/entities/Job.js';
-import { parseSeniority, parseWorkModel } from './support/parsing.js';
-import { scrapePaginatedHtml } from './support/htmlPagination.js';
-import { HttpClient } from '../http/HttpClient.js';
+import { SourceScraper } from '../../domain/ports/SourceScraper.js'
+import { Job } from '../../domain/entities/Job.js'
+import { parseSeniority, parseWorkModel } from './support/parsing.js'
+import { scrapePaginatedHtml } from './support/htmlPagination.js'
+import { HttpClient } from '../http/HttpClient.js'
 
 export class VagasComScraper implements SourceScraper {
-  readonly name = 'Vagas.com';
+  readonly name = 'Vagas.com'
 
-  constructor(private readonly http: HttpClient = new HttpClient()) {}
+  constructor (private readonly http: HttpClient = new HttpClient()) {}
 
-  async scrape(): Promise<Job[]> {
-    return scrapePaginatedHtml(
+  async scrape (): Promise<Job[]> {
+    return await scrapePaginatedHtml(
       this.http,
       (page) => `https://www.vagas.com.br/vagas-de-frontend?pagina=${page}`,
       ($) => {
-        const jobs: Job[] = [];
+        const jobs: Job[] = []
         $('.vaga').each((_, element) => {
-          const el = $(element);
-          const anchor = el.find('.link-detalhes-vaga');
-          const title = anchor.text().trim();
-          const href = anchor.attr('href');
-          if (!title || !href) return;
+          const el = $(element)
+          const anchor = el.find('.link-detalhes-vaga')
+          const title = anchor.text().trim()
+          const href = anchor.attr('href')
 
-          const company = el.find('.emprVaga').text().trim();
-          const locationText = el.find('.vaga-local').text().toLowerCase();
-          let model = parseWorkModel(locationText);
-          if (model === 'Outro') model = parseWorkModel(title);
+          if (!title || !href) return
+
+          const company = el.find('.emprVaga').text().trim()
+          const locationText = el.find('.vaga-local').text().toLowerCase()
+          let model = parseWorkModel(locationText)
+          if (model === 'Outro') model = parseWorkModel(title)
 
           jobs.push({
             title,
@@ -34,11 +35,12 @@ export class VagasComScraper implements SourceScraper {
             model,
             city: model === 'Híbrido' ? locationText : undefined,
             seniority: parseSeniority(title),
-            source: this.name,
-          });
-        });
-        return jobs;
+            source: this.name
+          })
+        })
+
+        return jobs
       }
-    );
+    )
   }
 }

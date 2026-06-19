@@ -1,6 +1,6 @@
-import { Kysely, sql } from 'kysely';
+import { Kysely, sql } from 'kysely'
 
-export async function up(db: Kysely<any>): Promise<void> {
+export async function up (db: Kysely<any>): Promise<void> {
   await db.schema
     .createTable('jobs_sent')
     .addColumn('id', 'integer', (col) => col.primaryKey().autoIncrement())
@@ -10,9 +10,9 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn('sent_at', 'text', (col) =>
       col.defaultTo(sql`(datetime('now'))`).notNull()
     )
-    .execute();
+    .execute()
 }
 
-export async function down(db: Kysely<any>): Promise<void> {
-  await db.schema.dropTable('jobs_sent').execute();
+export async function down (db: Kysely<any>): Promise<void> {
+  await db.schema.dropTable('jobs_sent').execute()
 }

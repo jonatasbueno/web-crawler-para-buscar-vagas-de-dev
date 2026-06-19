@@ -1,6 +1,6 @@
-import { Kysely, sql } from 'kysely';
+import { Kysely, sql } from 'kysely'
 
-export async function up(db: Kysely<any>): Promise<void> {
+export async function up (db: Kysely<any>): Promise<void> {
   await db.schema
     .createTable('pipeline_runs')
     .addColumn('id', 'integer', (col) => col.primaryKey().autoIncrement())
@@ -10,16 +10,16 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn('ran_at', 'text', (col) =>
       col.defaultTo(sql`(datetime('now'))`).notNull()
     )
-    .execute();
+    .execute()
 
   await db.schema
     .createIndex('pipeline_runs_run_date_scheduled_hour_unique')
     .on('pipeline_runs')
     .columns(['run_date', 'scheduled_hour'])
     .unique()
-    .execute();
+    .execute()
 }
 
-export async function down(db: Kysely<any>): Promise<void> {
-  await db.schema.dropTable('pipeline_runs').execute();
+export async function down (db: Kysely<any>): Promise<void> {
+  await db.schema.dropTable('pipeline_runs').execute()
 }

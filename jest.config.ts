@@ -33,6 +33,7 @@ export default {
     '!src/infrastructure/scrapers/coodesh.ts',
     '!src/infrastructure/scrapers/trampos.ts',
     '!src/infrastructure/scrapers/hipsters.ts',
+    '!src/infrastructure/scrapers/indeed.ts',
   ],
   coverageThreshold: {
     global: {

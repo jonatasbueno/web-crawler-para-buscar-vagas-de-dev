@@ -1,4 +1,4 @@
-import { Job } from '../entities/Job.js';
+import { Job } from '../entities/Job.js'
 
 /**
  * Porta de saída: cada fonte de vagas (portal/API/repo) implementa esta interface.
@@ -6,6 +6,6 @@ import { Job } from '../entities/Job.js';
  * para que o caso de uso isole o erro sem interromper as demais fontes.
  */
 export interface SourceScraper {
-  readonly name: string;
-  scrape(): Promise<Job[]>;
+  readonly name: string
+  scrape: () => Promise<Job[]>
 }
