@@ -9,6 +9,7 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "db:migrate": "tsx src/infrastructure/persistence/migrate.ts",
     "db:rollback": "tsx src/infrastructure/persistence/migrate.ts down",
+    "db:drop": "tsx src/infrastructure/persistence/dropAllTables.ts",
     "run:cron:8": "npm run db:migrate && tsx src/interface/cli/index.ts --scheduled-hour 8",
     "run:cron:13": "npm run db:migrate && tsx src/interface/cli/index.ts --scheduled-hour 13",
     "run:cron:20": "npm run db:migrate && tsx src/interface/cli/index.ts --scheduled-hour 20",

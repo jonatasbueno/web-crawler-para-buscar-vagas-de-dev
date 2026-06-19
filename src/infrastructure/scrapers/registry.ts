@@ -10,7 +10,6 @@ import { SolidesScraper } from './solides.js'
 import { WorkanaScraper } from './workana.js'
 import { CoodeshScraper } from './coodesh.js'
 import { TramposScraper } from './trampos.js'
-import { HipstersScraper, RemotarScraper } from './hipsters.js'
 import { GeekHunterScraper, ReveloScraper } from './others.js'
 import { createQuickinScrapers } from './quickin.js'
 import { IndeedScraper } from './indeed.js'
@@ -33,8 +32,6 @@ export function createAllScrapers (http: HttpClient = new HttpClient()): SourceS
     new WorkanaScraper(),
     new CoodeshScraper(),
     new TramposScraper(),
-    new HipstersScraper(),
-    new RemotarScraper(),
     // Boards de empresa hospedados no Quickin (ATS) — configurável por QUICKIN_COMPANIES
     ...createQuickinScrapers(http),
     // Indeed (busca pública via navegador headless por causa do Cloudflare)

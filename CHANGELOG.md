@@ -68,8 +68,7 @@ Use estas seções dentro de cada versão (omitindo as vazias):
   por substring (ex.: `ios` em "benefícios"/"negócios", `expo` em "exposição").
 - **Coleta multi-fonte ampliada**: 11 repositórios `*/vagas` do GitHub (frontendbr, react-brasil,
   flutterbr, nodejsdevbr, rustdevbr, gommunity, pydevbr, phpdevbr, rubydevbr, frontend-ao,
-  frontend-pt) via API REST de issues, mais APInfo, Sólides Vagas, Workana, Coodesh, Trampos.co,
-  Hipsters.Jobs e Remotar.
+  frontend-pt) via API REST de issues, mais APInfo, Sólides Vagas, Workana, Coodesh e Trampos.co.
 - Scraper genérico `GithubVagasScraper` parametrizado por organização, com paginação que respeita
   a janela de recência e suporte a `GITHUB_TOKEN` opcional (5000 req/h).
 - Fallback headless opcional via **Playwright** (`BrowserClient`) para fontes SPA, com degradação

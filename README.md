@@ -11,7 +11,7 @@ O pipeline roda de forma agendada (3 vezes ao dia) ou sob demanda, com persistê
 - **Coleta multi-fonte** — Busca vagas em paralelo sequencial por fonte:
   - **11 repositórios `*/vagas` do GitHub** (frontendbr, react-brasil, flutterbr, nodejsdevbr, rustdevbr, gommunity, pydevbr, phpdevbr, rubydevbr, frontend-ao, frontend-pt) via API REST de issues.
   - **Portais server-rendered**: APInfo, Vagas.com, Programathor e a API do Gupy.
-  - **Portais SPA** (via Playwright): Sólides Vagas, Workana, Coodesh, Trampos.co (e best-effort: Hipsters.Jobs, Remotar).
+  - **Portais SPA** (via Playwright): Sólides Vagas, Workana, Coodesh, Trampos.co.
   - **Quickin (ATS)** — boards de vagas de empresas hospedados no Quickin, configuráveis por slug (ex.: `avanttibr`).
   - **LinkedIn** — busca pública de vagas (sem login).
   - **Indeed** — busca de "desenvolvedor" (últimos 14 dias, remoto) via navegador headless (contorna o Cloudflare); fecha o popup de e-mail por fallback e descarta vagas de torno CNC / mecânica.
@@ -165,7 +165,7 @@ sequenceDiagram
 | **systemd timers / cron**    | Agendamento delegado ao SO; aplicação stateless entre execuções.                                      |
 
 
-> **Nota sobre fontes SPA:** Sólides, Workana, Coodesh e Trampos.co renderizam as vagas no cliente e são coletadas via Playwright (verificadas com vagas reais). Hipsters.jobs e Remotar dependem de acesso à rede que pode ser bloqueado em alguns ambientes — ficam *best-effort* e degradam para lista vazia sem quebrar o pipeline. O Chromium é instalado com `npx playwright install chromium`.
+> **Nota sobre fontes SPA:** Sólides, Workana, Coodesh e Trampos.co renderizam as vagas no cliente e são coletadas via Playwright (verificadas com vagas reais). Cada uma degrada para lista vazia sem quebrar o pipeline caso a renderização falhe. O Chromium é instalado com `npx playwright install chromium`.
 
 ---
 
