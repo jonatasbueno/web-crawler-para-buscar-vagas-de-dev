@@ -32,16 +32,39 @@ Use estas seções dentro de cada versão (omitindo as vazias):
 
 ---
 
-## [0.1.0] 2026-06-19
+## [Unreleased]
+
+---
+
+## [0.2.0] - 2026-06-19
 
 ### Added
 
 - **Scraper Indeed** (`br.indeed.com`) — busca de "desenvolvedor" (últimos 14 dias, remoto) via
-  navegador headless (Playwright) com User-Agent real para contornar o Cloudflare; paginação
-  por `&start=N`. Inclui **fallback para fechar o popup** de confirmação de e-mail (Esc + botões
-  de fechar) e um **filtro que descarta vagas de torno CNC / programador da área de mecânica**
-  (`isMechanicalRole`). Opções de `BrowserClient`: `userAgent`, `locale`, `waitUntil` e
-  `dismissSelectors`.
+  Playwright com User-Agent real; paginação por `&start=N` via `renderSession` (sessão reutilizada
+  para cookies entre páginas). Inclui fallback para fechar popup de confirmação de e-mail e filtro
+  `isMechanicalRole` que descarta vagas de torno CNC / programador mecânico.
+- **`renderSession` no `BrowserClient`** — gerenciamento de contexto Playwright (locale, User-Agent,
+  `waitUntil`, `dismissSelectors`) com reutilização de sessão entre navegações.
+- **ESLint + Prettier** — `eslint.config.mjs`, `.prettierrc.json` e script `npm run lint`.
+- Script **`db:drop`** — remove todas as tabelas do SQLite (incluindo `kysely_migration`).
+- Testes unitários para o scraper Indeed (`tests/indeed.test.ts`).
+
+### Changed
+
+- **`install-cron.sh`** resolve dinamicamente os caminhos de `npm`/`node` (nvm, fnm, volta, asdf).
+- **Units systemd** passam a usar `__NODE_BIN__` em vez de `/usr/bin/npm` fixo.
+- Refatoração de estilo em todo o código TypeScript para conformidade com ESLint/Prettier.
+
+### Removed
+
+- Scraper **Hipsters.Jobs** (`hipsters.ts`) e referências no registry e documentação.
+
+---
+
+## [0.1.0] - 2026-06-19
+
+### Added
 
 - **Arquitetura Clean** em camadas: `domain` (entidades, serviços e ports), `application`
   (casos de uso), `infrastructure` (scrapers, persistência, notifier, HTTP) e `interface` (CLI).
@@ -68,7 +91,8 @@ Use estas seções dentro de cada versão (omitindo as vazias):
   por substring (ex.: `ios` em "benefícios"/"negócios", `expo` em "exposição").
 - **Coleta multi-fonte ampliada**: 11 repositórios `*/vagas` do GitHub (frontendbr, react-brasil,
   flutterbr, nodejsdevbr, rustdevbr, gommunity, pydevbr, phpdevbr, rubydevbr, frontend-ao,
-  frontend-pt) via API REST de issues, mais APInfo, Sólides Vagas, Workana, Coodesh e Trampos.co.
+  frontend-pt) via API REST de issues, mais APInfo, Sólides Vagas, Workana, Coodesh, Trampos.co,
+  Hipsters.Jobs e Remotar.
 - Scraper genérico `GithubVagasScraper` parametrizado por organização, com paginação que respeita
   a janela de recência e suporte a `GITHUB_TOKEN` opcional (5000 req/h).
 - Fallback headless opcional via **Playwright** (`BrowserClient`) para fontes SPA, com degradação

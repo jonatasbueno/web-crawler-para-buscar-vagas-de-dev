@@ -1,6 +1,6 @@
 {
   "name": "crawler-vagas-dev",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "description": "Scraper de vagas focado em Desenvolvedores de Software Frontend / React Native.",
   "main": "src/interface/cli/index.ts",
   "type": "module",
