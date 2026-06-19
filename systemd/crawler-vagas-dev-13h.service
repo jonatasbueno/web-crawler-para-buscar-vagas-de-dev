@@ -6,7 +6,8 @@ After=network-online.target
 Type=oneshot
 WorkingDirectory=__PROJECT_DIR__
 EnvironmentFile=-__PROJECT_DIR__/.env
-ExecStart=/usr/bin/npm run run:cron:13
+Environment=PATH=__NODE_BIN__:/usr/local/bin:/usr/bin:/bin
+ExecStart=__NODE_BIN__/npm run run:cron:13
 StandardOutput=append:__PROJECT_DIR__/data/cron.log
 StandardError=append:__PROJECT_DIR__/data/cron.log
 

@@ -4,8 +4,18 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SYSTEMD_USER_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
 
-if [[ "$PROJECT_DIR" == *'|'* ]] || [[ "$PROJECT_DIR" == *$'\n'* ]]; then
-  echo "Caminho do projeto inválido para instalação do cron." >&2
+# Resolve o diretório do npm/node em uso (cobre nvm/fnm/volta/asdf), pois o
+# systemd não herda o PATH do shell e o npm pode não estar em /usr/bin.
+NPM_BIN="$(command -v npm || true)"
+if [[ -z "$NPM_BIN" ]]; then
+  echo "npm não encontrado no PATH. Ative seu Node (ex.: nvm use) e rode novamente." >&2
+  exit 1
+fi
+NODE_BIN="$(cd "$(dirname "$NPM_BIN")" && pwd)"
+
+if [[ "$PROJECT_DIR" == *'|'* ]] || [[ "$PROJECT_DIR" == *$'\n'* ]] \
+  || [[ "$NODE_BIN" == *'|'* ]] || [[ "$NODE_BIN" == *$'\n'* ]]; then
+  echo "Caminho inválido para instalação do cron." >&2
   exit 1
 fi
 
@@ -14,7 +24,7 @@ mkdir -p "$SYSTEMD_USER_DIR" "$PROJECT_DIR/data"
 install_unit() {
   local template="$1"
   local dest="$2"
-  sed "s|__PROJECT_DIR__|$PROJECT_DIR|g" "$template" > "$dest"
+  sed -e "s|__PROJECT_DIR__|$PROJECT_DIR|g" -e "s|__NODE_BIN__|$NODE_BIN|g" "$template" > "$dest"
 }
 
 # Services agendados (slots 08h, 13h, 20h)
