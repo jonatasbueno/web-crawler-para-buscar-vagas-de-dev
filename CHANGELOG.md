@@ -32,29 +32,60 @@ Use estas seções dentro de cada versão (omitindo as vazias):
 
 ---
 
-## [Unreleased]
+## [0.1.0] 2026-06-19
 
 ### Added
 
-- Schema tipado do banco em `src/db/schema.ts` (`Database`, `NewJobsSent`, `NewPipelineRun`, etc.).
-- Runner de migrations nativo do Kysely (`src/db/migrate.ts`).
-- Factory `createDb()` para instâncias SQLite em memória nos testes.
-- Índice único em `pipeline_runs (run_date, scheduled_hour)` para deduplicação de execuções.
+- **Arquitetura Clean** em camadas: `domain` (entidades, serviços e ports), `application`
+  (casos de uso), `infrastructure` (scrapers, persistência, notifier, HTTP) e `interface` (CLI).
+- Suporte ao Playwright instalado: os scrapers SPA (Sólides, Workana, Coodesh, Trampos)
+  passam a coletar vagas reais via navegador headless.
+- **Scraper Quickin (ATS)** — coleta boards de empresa (`jobs.quickin.io/<empresa>/jobs`) lendo
+  o estado SSR `window.__NUXT__` **via axios** (avaliado em sandbox `vm`), com paginação `?page=N`.
+  Genérico por empresa, com lista padrão de empresas e override via `QUICKIN_COMPANIES`.
+- Campo `description` em `Job`, usado pelo filtro de stack quando o título é genérico; helper `stripHtml`.
+- Util compartilhado `scrapePaginatedHtml` — remove a duplicação do laço de paginação dos
+  scrapers HTML (Programathor, Vagas.com, LinkedIn).
 
 ### Changed
 
-- Substituição de Knex.js + sqlite3 por **Kysely** + **better-sqlite3** com queries type-safe.
-- `JobsRepository` reescrito com API do Kysely (`selectFrom`, `insertInto`, `onConflict`).
-- Scripts `db:migrate` e `db:rollback` passam a usar `tsx src/db/migrate.ts`.
+- Todas as requisições HTTP do projeto usam **axios** (via `HttpClient`); nenhum `fetch` nativo.
 
 ### Removed
 
-- Dependências `knex` e `sqlite3`.
-- Arquivo `knexfile.ts`.
+- Variáveis de ambiente `LINKEDIN_USERNAME` e `LINKEDIN_PASSWORD` (não utilizadas pelo código).
 
 ### Fixed
 
-- `onConflict` em `recordRun` agora funciona corretamente com constraint única no banco.
+- **Filtro de stack** passa a usar fronteiras de palavra (regex), eliminando falsos positivos
+  por substring (ex.: `ios` em "benefícios"/"negócios", `expo` em "exposição").
+- **Coleta multi-fonte ampliada**: 11 repositórios `*/vagas` do GitHub (frontendbr, react-brasil,
+  flutterbr, nodejsdevbr, rustdevbr, gommunity, pydevbr, phpdevbr, rubydevbr, frontend-ao,
+  frontend-pt) via API REST de issues, mais APInfo, Sólides Vagas, Workana, Coodesh, Trampos.co,
+  Hipsters.Jobs e Remotar.
+- Scraper genérico `GithubVagasScraper` parametrizado por organização, com paginação que respeita
+  a janela de recência e suporte a `GITHUB_TOKEN` opcional (5000 req/h).
+- Fallback headless opcional via **Playwright** (`BrowserClient`) para fontes SPA, com degradação
+  graciosa quando o pacote não está instalado.
+- `HttpClient` compartilhado (User-Agent, timeout, retry com backoff e decodificação ISO-8859-1).
+- Coluna `source` e `published_at` em `jobs_sent` (migration `add_source_to_jobs_sent`).
+
+### Changed
+
+- **Filtro de stack** ampliado para o ecossistema JavaScript e afins (Node, Node-RED, Electron,
+  Elixir, Backbone etc.) além do foco Frontend/Mobile.
+- **Filtro de recência** reduzido de 28 para **15 dias**.
+- **Ordenação** passa a ser por **recência (mais recente primeiro)**, com senioridade como desempate.
+- **Catch-up** executa **apenas o último slot pendente do dia atual** (antes: todos os pendentes).
+- **Execução avulsa** (`--once-loose`) agora **avisa quando o retorno é vazio**.
+- O **registro do slot agendado** (`recordRun`) ocorre **somente após a consolidação das vagas**.
+- Caminhos dos scripts atualizados para a nova estrutura (`src/interface/cli/index.ts`,
+  `src/infrastructure/persistence/migrate.ts`).
+
+### Removed
+
+- Estrutura antiga em `src/{db,filters,sorters,notifier,scrapers,utils,types}` e `src/index.ts`,
+  realocada para as camadas da Clean Architecture.
 
 ---
 

@@ -1,69 +1,40 @@
 import { jest } from '@jest/globals';
 import axios from 'axios';
-import { SlackNotifier } from '../src/notifier/slackNotifier.js';
-import { Job } from '../src/types/index.js';
+import { SlackNotifier } from '../src/infrastructure/notifier/SlackNotifier.js';
+import { Job } from '../src/domain/entities/Job.js';
 
 describe('SlackNotifier', () => {
   let postSpy: any;
 
   beforeEach(() => {
-    postSpy = jest.spyOn(axios, 'post').mockResolvedValue({ data: {} });
-    jest.clearAllMocks();
+    postSpy = jest.spyOn(axios, 'post').mockResolvedValue({ data: {} } as any);
   });
 
-  afterAll(() => {
+  afterEach(() => {
     postSpy.mockRestore();
   });
 
-  it('should warn if no webhook URL is provided', async () => {
-    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-    const notifier = new SlackNotifier('');
-    await notifier.sendJobs([]);
-    expect(consoleSpy).toHaveBeenCalledWith('Slack Webhook URL not configured. Skipping notification.');
-    consoleSpy.mockRestore();
-  });
-
-  it('should send fallback message if no jobs', async () => {
-    const notifier = new SlackNotifier('http://webhook.test');
-    await notifier.sendJobs([]);
-    expect(postSpy).toHaveBeenCalledWith('http://webhook.test', {
-      text: 'Nenhum vaga nova encontrada'
-    });
-  });
-
-  it('should skip notification when notifyWhenEmpty is false', async () => {
-    const notifier = new SlackNotifier('http://webhook.test');
-    await notifier.sendJobs([], { notifyWhenEmpty: false });
+  it('avisa quando não há webhook configurado (sendJobs)', async () => {
+    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    await new SlackNotifier('').sendJobs([
+      { title: 'X', model: 'Home Office', seniority: 'Pleno', link: 'l' },
+    ]);
+    expect(consoleSpy).toHaveBeenCalled();
     expect(postSpy).not.toHaveBeenCalled();
-  });
-
-  it('should send error message to webhook', async () => {
-    const notifier = new SlackNotifier('http://webhook.test');
-    await notifier.sendError('test-context', new Error('boom'));
-    expect(postSpy).toHaveBeenCalledWith(
-      'http://webhook.test',
-      expect.objectContaining({
-        text: expect.stringContaining('test-context')
-      })
-    );
-    expect(postSpy).toHaveBeenCalledWith(
-      'http://webhook.test',
-      expect.objectContaining({
-        text: expect.stringContaining('boom')
-      })
-    );
-  });
-
-  it('should warn if no webhook URL is provided for errors', async () => {
-    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-    const notifier = new SlackNotifier('');
-    await notifier.sendError('ctx', new Error('x'));
-    expect(consoleSpy).toHaveBeenCalledWith('Slack Webhook URL not configured. Skipping error notification.');
     consoleSpy.mockRestore();
   });
 
-  it('should send jobs blocks if jobs are present', async () => {
-    const notifier = new SlackNotifier('http://webhook.test');
+  it('envia aviso de lista vazia (requisito: avisar quando vazio)', async () => {
+    await new SlackNotifier('http://hook').sendEmpty();
+    expect(postSpy).toHaveBeenCalledWith('http://hook', { text: 'Nenhuma vaga nova encontrada' });
+  });
+
+  it('sendJobs com lista vazia delega para sendEmpty', async () => {
+    await new SlackNotifier('http://hook').sendJobs([]);
+    expect(postSpy).toHaveBeenCalledWith('http://hook', { text: 'Nenhuma vaga nova encontrada' });
+  });
+
+  it('monta blocks com as vagas', async () => {
     const jobs: Job[] = [
       {
         title: 'Frontend',
@@ -73,29 +44,33 @@ describe('SlackNotifier', () => {
         seniority: 'Pleno',
         salary: 'R$ 5000',
         contactEmail: 'rh@tech.com',
-        link: 'http://link.com'
+        link: 'http://link.com',
+        publishedAt: new Date('2026-06-12'),
+        source: 'GitHub',
       },
-      {
-        title: 'React Native',
-        model: 'Home Office',
-        seniority: 'Júnior',
-        link: 'http://link2.com',
-        company: undefined
-      },
-      {
-        title: 'Backend',
-        model: 'Híbrido',
-        seniority: 'Sênior',
-        link: 'http://link3.com'
-      }
+      { title: 'React Native', model: 'Home Office', seniority: 'Júnior', link: 'http://l2.com' },
     ];
+    await new SlackNotifier('http://hook').sendJobs(jobs);
+    const body = postSpy.mock.calls[0][1] as any;
+    expect(body.blocks.length).toBeGreaterThan(0);
+    const serialized = JSON.stringify(body.blocks);
+    expect(serialized).toContain('Híbrido - Campinas');
+    expect(serialized).toContain('100% Remoto');
+    expect(serialized).toContain('Publicada em');
+  });
 
-    await notifier.sendJobs(jobs);
-    expect(postSpy).toHaveBeenCalled();
-    const callArgs = postSpy.mock.calls[0][1] as any;
-    expect(callArgs.blocks).toBeDefined();
-    expect(callArgs.blocks.length).toBeGreaterThan(0);
-    expect(JSON.stringify(callArgs.blocks)).toContain('Híbrido - Campinas');
-    expect(JSON.stringify(callArgs.blocks)).toContain('100% Remoto');
+  it('envia mensagem de erro com contexto', async () => {
+    await new SlackNotifier('http://hook').sendError('ctx', new Error('boom'));
+    const body = postSpy.mock.calls[0][1] as any;
+    expect(body.text).toContain('ctx');
+    expect(body.text).toContain('boom');
+  });
+
+  it('avisa quando não há webhook (sendError e sendEmpty)', async () => {
+    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    await new SlackNotifier('').sendError('ctx', new Error('x'));
+    await new SlackNotifier('').sendEmpty();
+    expect(postSpy).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
   });
 });

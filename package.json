@@ -2,18 +2,18 @@
   "name": "crawler-vagas-dev",
   "version": "1.0.0",
   "description": "Scraper de vagas focado em Desenvolvedores de Software Frontend / React Native.",
-  "main": "src/index.ts",
+  "main": "src/interface/cli/index.ts",
   "type": "module",
   "scripts": {
     "start": "npm run run:once:loose",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
-    "db:migrate": "tsx src/db/migrate.ts",
-    "db:rollback": "tsx src/db/migrate.ts down",
-    "run:cron:8": "npm run db:migrate && tsx src/index.ts --scheduled-hour 8",
-    "run:cron:13": "npm run db:migrate && tsx src/index.ts --scheduled-hour 13",
-    "run:cron:20": "npm run db:migrate && tsx src/index.ts --scheduled-hour 20",
-    "run:cron:catch-up": "npm run db:migrate && tsx src/index.ts --catch-up",
-    "run:once:loose": "npm run db:migrate && tsx src/index.ts --once-loose",
+    "db:migrate": "tsx src/infrastructure/persistence/migrate.ts",
+    "db:rollback": "tsx src/infrastructure/persistence/migrate.ts down",
+    "run:cron:8": "npm run db:migrate && tsx src/interface/cli/index.ts --scheduled-hour 8",
+    "run:cron:13": "npm run db:migrate && tsx src/interface/cli/index.ts --scheduled-hour 13",
+    "run:cron:20": "npm run db:migrate && tsx src/interface/cli/index.ts --scheduled-hour 20",
+    "run:cron:catch-up": "npm run db:migrate && tsx src/interface/cli/index.ts --catch-up",
+    "run:once:loose": "npm run db:migrate && tsx src/interface/cli/index.ts --once-loose",
     "cron:install": "bash scripts/install-cron.sh"
   },
   "keywords": [
@@ -31,6 +31,9 @@
     "dotenv": "^16.4.0",
     "kysely": "^0.28.2",
     "slack-notify": "^2.0.7"
+  },
+  "optionalDependencies": {
+    "playwright": "^1.44.0"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
