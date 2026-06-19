@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio'
 import { SourceScraper } from '../../domain/ports/SourceScraper.js'
 import { Job } from '../../domain/entities/Job.js'
 import { parseSeniority, parseWorkModel } from './support/parsing.js'
-import { renderHtml } from '../http/BrowserClient.js'
+import { renderSession } from '../http/BrowserClient.js'
 
 const BASE = 'https://br.indeed.com'
 // Busca: desenvolvedor, últimos 14 dias, filtro DSQF7 (remoto).
@@ -18,7 +18,10 @@ const POPUP_CLOSE_SELECTORS = [
   '.icl-CloseButton',
   '[data-testid="closeIcon"]'
 ]
-const MAX_PAGES = 3
+// O Indeed faz soft-block de paginação (serve a página, mas omite os cards a
+// partir da 2ª) — só a 1ª página é confiável. O laço/`renderSession` mantém a
+// capacidade de paginar caso isso mude; basta elevar este limite.
+const MAX_PAGES = 1
 const PAGE_SIZE = 10
 
 /** Termos que indicam vaga de torno CNC / programador da área de mecânica. */
@@ -74,21 +77,27 @@ export class IndeedScraper implements SourceScraper {
   async scrape (): Promise<Job[]> {
     const jobs: Job[] = []
     try {
-      for (let page = 0; page < MAX_PAGES; page++) {
-        const url = `${BASE}${SEARCH_PATH}&start=${page * PAGE_SIZE}`
-        const html = await renderHtml(url, {
+      // Uma única sessão de navegador para todas as páginas: o contexto é
+      // reutilizado, preservando o cookie de liberação do Cloudflare ao paginar.
+      await renderSession(
+        {
           waitUntil: 'domcontentloaded',
           userAgent: USER_AGENT,
           locale: 'pt-BR',
           dismissSelectors: POPUP_CLOSE_SELECTORS,
           waitForSelector: '.job_seen_beacon',
           scrollRounds: 1
-        })
-        const parsed = extractIndeedJobs(cheerio.load(html))
+        },
+        async (visit) => {
+          for (let page = 0; page < MAX_PAGES; page++) {
+            const html = await visit(`${BASE}${SEARCH_PATH}&start=${page * PAGE_SIZE}`)
+            const parsed = extractIndeedJobs(cheerio.load(html))
 
-        if (parsed.length === 0) break
-        jobs.push(...parsed)
-      }
+            if (parsed.length === 0) break
+            jobs.push(...parsed)
+          }
+        }
+      )
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error)
       console.log(`[Indeed] coleta indisponível (best-effort): ${reason}`)

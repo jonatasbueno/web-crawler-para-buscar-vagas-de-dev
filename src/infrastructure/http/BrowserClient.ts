@@ -38,48 +38,31 @@ async function loadChromium (): Promise<{ launch: (opts: { headless: boolean }) 
   }
 }
 
-/** Abre a página, faz scroll/espera conforme as opções e executa `action`. */
-async function withPage<T> (
-  url: string,
-  options: RenderOptions,
-  action: (page: any) => Promise<T>
-): Promise<T> {
-  const {
-    scrollRounds = 0,
-    waitForSelector,
-    scrollDelayMs = 1200,
-    waitUntil = 'networkidle',
-    userAgent,
-    locale,
-    dismissSelectors
-  } = options
-  const chromium = await loadChromium()
-  const browser = await chromium.launch({ headless: true })
-  try {
-    const contextOptions: Record<string, unknown> = {}
+function buildContextOptions (options: RenderOptions): Record<string, unknown> {
+  const contextOptions: Record<string, unknown> = {}
 
-    if (userAgent) contextOptions.userAgent = userAgent
-    if (locale) contextOptions.locale = locale
-    const context = await browser.newContext(contextOptions)
-    const page = await context.newPage()
-    await page.goto(url, { waitUntil, timeout: 30_000 })
+  if (options.userAgent) contextOptions.userAgent = options.userAgent
+  if (options.locale) contextOptions.locale = options.locale
 
-    if (dismissSelectors?.length) {
-      await dismissPopups(page, dismissSelectors)
-    }
+  return contextOptions
+}
 
-    if (waitForSelector) {
-      await page.waitForSelector(waitForSelector, { timeout: 15_000 }).catch(() => undefined)
-    }
+/** Navega até a URL, fecha popups, aguarda o seletor e faz scroll conforme as opções. */
+async function preparePage (page: any, url: string, options: RenderOptions): Promise<void> {
+  const { scrollRounds = 0, waitForSelector, scrollDelayMs = 1200, waitUntil = 'networkidle', dismissSelectors } = options
+  await page.goto(url, { waitUntil, timeout: 30_000 })
 
-    for (let i = 0; i < scrollRounds; i++) {
-      await page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
-      await page.waitForTimeout(scrollDelayMs)
-    }
+  if (dismissSelectors?.length) {
+    await dismissPopups(page, dismissSelectors)
+  }
 
-    return await action(page)
-  } finally {
-    await browser.close()
+  if (waitForSelector) {
+    await page.waitForSelector(waitForSelector, { timeout: 15_000 }).catch(() => undefined)
+  }
+
+  for (let i = 0; i < scrollRounds; i++) {
+    await page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
+    await page.waitForTimeout(scrollDelayMs)
   }
 }
 
@@ -94,5 +77,41 @@ async function dismissPopups (page: any, selectors: string[]): Promise<void> {
 
 /** Renderiza a página e retorna o HTML final. */
 export async function renderHtml (url: string, options: RenderOptions = {}): Promise<string> {
-  return await withPage(url, options, (page) => page.content())
+  const chromium = await loadChromium()
+  const browser = await chromium.launch({ headless: true })
+  try {
+    const context = await browser.newContext(buildContextOptions(options))
+    const page = await context.newPage()
+    await preparePage(page, url, options)
+
+    return await page.content()
+  } finally {
+    await browser.close()
+  }
+}
+
+/**
+ * Abre UMA sessão de navegador (um contexto reutilizado) e expõe `visit(url)` que
+ * retorna o HTML de cada página. Reutilizar o contexto preserva cookies entre
+ * páginas — essencial para manter a liberação do Cloudflare ao paginar (ex.: Indeed).
+ */
+export async function renderSession<T> (
+  options: RenderOptions,
+  run: (visit: (url: string) => Promise<string>) => Promise<T>
+): Promise<T> {
+  const chromium = await loadChromium()
+  const browser = await chromium.launch({ headless: true })
+  try {
+    const context = await browser.newContext(buildContextOptions(options))
+    const page = await context.newPage()
+    const visit = async (url: string): Promise<string> => {
+      await preparePage(page, url, options)
+
+      return await page.content()
+    }
+
+    return await run(visit)
+  } finally {
+    await browser.close()
+  }
 }
